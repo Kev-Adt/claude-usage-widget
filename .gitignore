@@ -1,0 +1,16 @@
+# Credenciales / tokens (NUNCA subir)
+.credentials.json
+*.credentials.json
+*.bak
+*.token
+secrets*
+
+# Logs / temporales
+*.log
+*.out
+*.err
+*.tmp
+
+# Windows
+Thumbs.db
+desktop.ini
