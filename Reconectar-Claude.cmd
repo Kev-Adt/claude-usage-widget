@@ -11,10 +11,19 @@ echo.
 
 set "BASE=%APPDATA%\Claude\claude-code"
 set "EXE="
+rem 1) carpeta de version mas nueva
 for /f "delims=" %%D in ('dir /b /ad /o-n "%BASE%" 2^>nul') do (
   if not defined EXE if exist "%BASE%\%%D\claude.exe" set "EXE=%BASE%\%%D\claude.exe"
 )
-if not defined EXE ( echo ERROR: no encontre claude.exe & pause & exit /b 1 )
+rem 2) respaldo: busqueda recursiva (por si cambia la estructura tras una actualizacion)
+if not defined EXE for /f "delims=" %%F in ('dir /s /b "%BASE%\claude.exe" 2^>nul') do (
+  if not defined EXE set "EXE=%%F"
+)
+rem 3) ultimo respaldo: el comando 'claude' del PATH
+if not defined EXE for %%G in (claude.exe claude.cmd) do (
+  if not defined EXE if not "%%~$PATH:G"=="" set "EXE=%%~$PATH:G"
+)
+if not defined EXE ( echo ERROR: no encontre claude.exe - abre Claude Code una vez y reintenta & pause & exit /b 1 )
 
 "%EXE%" auth login --claudeai
 
