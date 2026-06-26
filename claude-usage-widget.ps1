@@ -110,8 +110,26 @@ $menu=New-Object System.Windows.Forms.ContextMenuStrip
 $miShow=$menu.Items.Add('Mostrar / Ocultar ventana'); $miRef=$menu.Items.Add('Actualizar ahora'); $miLogin=$menu.Items.Add('Reconectar (login)')
 $menu.Items.Add('-')|Out-Null; $miExit=$menu.Items.Add('Salir'); $tray.ContextMenuStrip=$menu
 
+function Find-ClaudeExe {
+    $base = Join-Path $env:APPDATA 'Claude\claude-code'
+    if (Test-Path $base) {
+        $e = Get-ChildItem $base -Recurse -Filter 'claude.exe' -ErrorAction SilentlyContinue |
+             Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+        if ($e) { return $e }
+    }
+    $gc = Get-Command claude.exe -ErrorAction SilentlyContinue
+    if ($gc) { return $gc.Source }
+    return $null
+}
 function Launch-Login {
-    try { if (Test-Path $ReconnectCmd) { Start-Process -FilePath $ReconnectCmd } } catch {}
+    $exe = Find-ClaudeExe
+    if ($exe) {
+        try { Start-Process -FilePath 'cmd.exe' -ArgumentList @('/k', ('"' + $exe + '" auth login --claudeai')) } catch {}
+    } elseif (Test-Path $ReconnectCmd) {
+        try { Start-Process -FilePath $ReconnectCmd } catch {}
+    } else {
+        [System.Windows.Forms.MessageBox]::Show('No encontre claude.exe. Abre Claude Code una vez y reintenta.','Claude Widget') | Out-Null
+    }
 }
 
 function Fmt-Countdown($dt){ if(-not $dt){return '--'}; $ts=$dt-(Get-Date)
