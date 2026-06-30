@@ -112,13 +112,17 @@ $menu.Items.Add('-')|Out-Null; $miExit=$menu.Items.Add('Salir'); $tray.ContextMe
 
 function Find-ClaudeExe {
     $base = Join-Path $env:APPDATA 'Claude\claude-code'
-    if (Test-Path $base) {
-        $e = Get-ChildItem $base -Recurse -Filter 'claude.exe' -ErrorAction SilentlyContinue |
-             Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-        if ($e) { return $e }
+    # reintenta: claude.exe desaparece por instantes cuando la app lo gestiona/actualiza
+    for ($try = 0; $try -lt 3; $try++) {
+        if (Test-Path $base) {
+            $e = Get-ChildItem $base -Recurse -Filter 'claude.exe' -ErrorAction SilentlyContinue |
+                 Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+            if ($e) { return $e }
+        }
+        $gc = Get-Command claude.exe -ErrorAction SilentlyContinue
+        if ($gc) { return $gc.Source }
+        Start-Sleep -Milliseconds 700
     }
-    $gc = Get-Command claude.exe -ErrorAction SilentlyContinue
-    if ($gc) { return $gc.Source }
     return $null
 }
 function Launch-Login {
